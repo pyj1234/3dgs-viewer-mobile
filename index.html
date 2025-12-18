@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>3DGS 沉浸式查看器</title>
+    <style>
+        body { 
+            margin: 0; overflow: hidden; background-color: #000; 
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            touch-action: none; 
+            -webkit-user-select: none; user-select: none;
+        }
+        #application-canvas { 
+            width: 100%; height: 100%; display: block; outline: none; 
+            position: absolute; top: 0; left: 0; z-index: 0;
+        }
+        
+        /* UI 层 */
+        #ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; 
+            z-index: 10;
+        }
+
+        /* === 新增：相框遮罩 === */
+        #view-frame {
+            position: absolute;
+            /* 设置边距：上下左右留出空间，形成相框感 */
+            top: 40px; bottom: 120px; 
+            left: 20px; right: 20px;
+            
+            /* 边框样式：细白线，带一点圆角 */
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            
+            /* 关键：利用超大阴影遮挡外部区域，形成"只显示在矩形内"的效果 */
+            box-shadow: 0 0 0 2000px #000; 
+            
+            pointer-events: none; /* 让点击穿透 */
+            z-index: 5; /* 在 Canvas 之上，但比按钮低 */
+        }
+
+        /* 按钮通用样式 */
+        .fab-btn {
+            position: absolute; width: 64px; height: 64px;
+            border-radius: 50%;
+            background: rgba(30, 30, 30, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #fff;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 28px;
+            pointer-events: auto; 
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            transition: transform 0.1s;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            z-index: 20; 
+        }
+        .fab-btn:active { transform: scale(0.9); background: rgba(60, 60, 60, 1.0); }
+
+        /* 按钮位置调整 (适应相框) */
+        #upload-btn { 
+            bottom: 40px; left: 50%; transform: translateX(-50%); 
+            background: #007aff; border-color: #5ac8fa;
+        }
+        #upload-btn:active { transform: translateX(-50%) scale(0.9); }
+
+        #gyro-btn { bottom: 40px; right: 30px; font-size: 14px; font-weight: bold; width: 50px; height: 50px; }
+        #gyro-btn.active { color: #00ffff; border-color: #00ffff; background: rgba(0, 50, 50, 0.8); }
+
+        /* 加载动画 */
+        .loader {
+            position: absolute; top: 50%; left: 50%; margin-left: -25px; margin-top: -25px;
+            width: 50px; height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top: 4px solid #007aff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: none; 
+            z-index: 30;
+        }
+        .loader.active { display: block; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* 提示文字 (放在顶部居中) */
+        #empty-tip {
+            position: absolute; width: 100%; text-align: center;
+            top: 45%; 
+            color: rgba(255, 255, 255, 0.6); font-size: 16px; 
+            display: none; text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            z-index: 30;
+        }
+        #empty-tip.show { display: block; }
+    </style>
+</head>
+<body>
+    <canvas id="application-canvas"></canvas>
+    
+    <input type="file" id="file-input" accept=".ply,.splat,.mlsharp" style="display: none;" />
+
+    <div id="view-frame"></div>
+
+    <div id="ui-layer">
+        <div id="empty-tip" class="show">点击下方按钮导入模型</div>
+        <div id="loader" class="loader"></div>
+        
+        <div id="upload-btn" class="fab-btn"><span>+</span></div>
+        <div id="gyro-btn" class="fab-btn">3D</div>
+    </div>
+    
+    <script type="module" src="./mobile-index.js"></script>
+</body>
+</html>
